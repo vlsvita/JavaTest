@@ -11,5 +11,4 @@ import java.util.List;
 public class ResponseDTO {
     private String status;
     private List<TestItemDTO> testItemDTO;
-    private String message;
 }
