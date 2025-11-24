@@ -17,10 +17,11 @@ public class TestServiceImpl implements TestService {
         this.testRepository = testRepository;
     }
 
-    public boolean save(TestItemDTO testItemDTO) {
-        TestItem testItem = new TestItem(testItemDTO.getName(), testItemDTO.getCategory());
-        TestItem saved = testRepository.save(testItem);
-        return saved.getId() != null;
+    public TestItemDTO save(TestItemDTO testItemDTO) {
+        TestItem saved = testRepository.save(new TestItem(testItemDTO.getName(), testItemDTO.getCategory()));
+        return saved.getId() != null
+                ? new TestItemDTO(saved.getId(), saved.getName(), saved.getCategory())
+                : null;
     }
 
     public TestItemDTO findById(Long id) {
@@ -55,16 +56,16 @@ public class TestServiceImpl implements TestService {
         }).collect(Collectors.toList());
     }
 
-    public boolean update(TestItemDTO testItemDTO) {
+    public TestItemDTO update(TestItemDTO testItemDTO) {
         Optional<TestItem> optional = testRepository.findById(testItemDTO.getId());
         if (optional.isPresent()) {
             TestItem testItem = optional.get();
             testItem.setName(testItemDTO.getName());
             testItem.setCategory(testItemDTO.getCategory());
-            testRepository.save(testItem);
-            return true;
+            TestItem temp = testRepository.save(testItem);
+            return new TestItemDTO(temp.getId(), temp.getName(), temp.getCategory());
         }
-        return false;
+        return null;
     }
 
     public boolean deleteById(Long id) {
