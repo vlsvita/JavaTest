@@ -55,7 +55,7 @@ public class TestServiceImpl implements TestService {
         }).collect(Collectors.toList());
     }
 
-    public boolean updateById(TestItemDTO testItemDTO) {
+    public boolean update(TestItemDTO testItemDTO) {
         Optional<TestItem> optional = testRepository.findById(testItemDTO.getId());
         if (optional.isPresent()) {
             TestItem testItem = optional.get();

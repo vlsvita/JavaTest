@@ -9,6 +9,6 @@ public interface TestService {
     TestItemDTO findById(Long id);
     List<TestItemDTO> findAll();
     List<TestItemDTO> findByName(String name);
-    boolean updateById(TestItemDTO testItemDTO);
+    boolean update(TestItemDTO testItemDTO);
     boolean deleteById(Long id);
 }
