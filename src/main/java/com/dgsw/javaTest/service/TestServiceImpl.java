@@ -2,14 +2,16 @@ package com.dgsw.javaTest.service;
 
 import com.dgsw.javaTest.dto.TestItemDTO;
 import com.dgsw.javaTest.entity.TestItem;
+import com.dgsw.javaTest.exception.ResourceNotFoundException;
 import com.dgsw.javaTest.repository.TestRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 public class TestServiceImpl implements TestService {
     private final TestRepository testRepository;
 
@@ -17,62 +19,68 @@ public class TestServiceImpl implements TestService {
         this.testRepository = testRepository;
     }
 
+    @Override
+    @Transactional
     public TestItemDTO save(TestItemDTO testItemDTO) {
-        TestItem saved = testRepository.save(new TestItem(testItemDTO.getName(), testItemDTO.getCategory()));
-        return saved.getId() != null
-                ? new TestItemDTO(saved.getId(), saved.getName(), saved.getCategory())
-                : null;
+        TestItem testItem = new TestItem(testItemDTO.getName(), testItemDTO.getCategory());
+        TestItem saved = testRepository.save(testItem);
+        return convertToDTO(saved);
     }
 
+    @Override
     public TestItemDTO findById(Long id) {
-        Optional<TestItem> testItem = testRepository.findById(id);
-        if (testItem.isPresent()) {
-            TestItemDTO testItemDTO = new TestItemDTO();
-            testItemDTO.setId(testItem.get().getId());
-            testItemDTO.setName(testItem.get().getName());
-            testItemDTO.setCategory(testItem.get().getCategory());
-            return testItemDTO;
-        }
-        return null;
+        TestItem testItem = testRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("TestItem", id));
+        return convertToDTO(testItem);
     }
 
+    @Override
     public List<TestItemDTO> findAll() {
-        return testRepository.findAll().stream().map(entity -> {
-            TestItemDTO testItemDTO = new TestItemDTO();
-            testItemDTO.setId(entity.getId());
-            testItemDTO.setName(entity.getName());
-            testItemDTO.setCategory(entity.getCategory());
-            return testItemDTO;
-        }).collect(Collectors.toList());
+        return testRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
+    @Override
     public List<TestItemDTO> findByName(String name) {
-        return testRepository.findByName(name).stream().map(entity -> {
-            TestItemDTO testItemDTO = new TestItemDTO();
-            testItemDTO.setId(entity.getId());
-            testItemDTO.setName(entity.getName());
-            testItemDTO.setCategory(entity.getCategory());
-            return testItemDTO;
-        }).collect(Collectors.toList());
+        return testRepository.findByName(name).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
+    @Override
+    public List<TestItemDTO> findByCategory(String category) {
+        return testRepository.findByCategory(category).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
     public TestItemDTO update(TestItemDTO testItemDTO) {
-        Optional<TestItem> optional = testRepository.findById(testItemDTO.getId());
-        if (optional.isPresent()) {
-            TestItem testItem = optional.get();
-            testItem.setName(testItemDTO.getName());
-            testItem.setCategory(testItemDTO.getCategory());
-            TestItem temp = testRepository.save(testItem);
-            return new TestItemDTO(temp.getId(), temp.getName(), temp.getCategory());
-        }
-        return null;
+        TestItem testItem = testRepository.findById(testItemDTO.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("TestItem", testItemDTO.getId()));
+        
+        testItem.setName(testItemDTO.getName());
+        testItem.setCategory(testItemDTO.getCategory());
+        
+        return convertToDTO(testItem);
     }
 
-    public boolean deleteById(Long id) {
-        if (testRepository.existsById(id)) {
-            testRepository.deleteById(id);
-            return true;
+    @Override
+    @Transactional
+    public void deleteById(Long id) {
+        if (!testRepository.existsById(id)) {
+            throw new ResourceNotFoundException("TestItem", id);
         }
-        return false;
+        testRepository.deleteById(id);
+    }
+
+    private TestItemDTO convertToDTO(TestItem testItem) {
+        TestItemDTO dto = new TestItemDTO();
+        dto.setId(testItem.getId());
+        dto.setName(testItem.getName());
+        dto.setCategory(testItem.getCategory());
+        return dto;
     }
 }

@@ -9,12 +9,14 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "test_items")
-public class TestItem {
+public class TestItem extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
     @Column(name = "name", nullable = false, length = 20)
     private String name;
+    
     @Column(name = "category", nullable = false)
     private String category;
 
